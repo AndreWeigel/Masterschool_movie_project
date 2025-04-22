@@ -8,7 +8,10 @@ import matplotlib.pyplot as plt
 from fuzzywuzzy import process
 
 # Local module import
-import movie_storage
+from library import MovieLibrary
+
+# Initialize the MovieLibrary
+library = MovieLibrary("sqlite:///movies.db")
 
 
 def exit_menu():
@@ -19,24 +22,19 @@ def exit_menu():
 
 def list_movies():
     """Displays the list of movies along with their ratings and years."""
-    movies = movie_storage.get_movies()
-    # Displays the list of movies and their ratings.
+    movies = library.get_movies_as_dict()
     print(f"{len(movies)} movies in total")
-    for movie, details in movies.items():
-        print(f"{movie} - Rating: {details['rating']} - Year: {details['year']}")
+    for movie in movies:
+        print(f"{movie['title']} - Rating: {movie['rating']} - Year: {movie['year']}")
 
 
 def add_movie():
     """Adds a new movie to the dictionary with its rating."""
-    movies = movie_storage.get_movies()
     while True:
-        title = input("\nEnter movie title: ")
+        title = input("\nEnter movie title: ").strip()
         if not title:
             print("Movie title cannot be empty. Please enter a valid title.")
             continue
-        if title in movies:
-            print(f"Movie {title} already exist!")
-            return
 
         try:
             rating = float(input("Enter rating (0-10): "))
@@ -52,71 +50,56 @@ def add_movie():
             print("Invalid year. Please enter a valid 4-digit year.")
             continue
 
-        movie_storage.add_movie(title, year, rating)
+        library.add_movie(title, int(year), rating)
         print(f"Movie '{title}' added successfully.")
-
         break
 
 
 def delete_movie():
     """Deletes a movie from the dictionary if it exists."""
     title = input("\nEnter movie name to delete: ")
-    movies = movie_storage.get_movies()
-    if title not in movies:
-        print(f"Error: Movie '{title}' not found.")
-        return
-    movie_storage.delete_movie(title)
+    library.remove_movie(title)
     print(f"Movie '{title}' deleted successfully.")
 
 
 def update_movie():
     """Updates the rating of an existing movie."""
-    movies = movie_storage.get_movies()
     title = input("\nEnter movie to update: ")
-    if title in movies:
-        while True:
-            try:
-                rating = float(input("Enter rating (0-10): "))
-                if rating < 0 or rating > 10:
-                    print("Rating must be between 0 and 10.")
-                    continue
-            except ValueError:
-                print("Invalid input. Please enter a numeric rating between 0 and 10.")
-                continue
+    try:
+        rating = float(input("Enter rating (0-10): "))
+        if rating < 0 or rating > 10:
+            print("Rating must be between 0 and 10.")
+            return
+    except ValueError:
+        print("Invalid input. Please enter a numeric rating between 0 and 10.")
+        return
 
-            year = input("Enter year: ")
-            if not year.isdigit() or len(year) != 4:
-                print("Invalid year. Please enter a valid 4-digit year.")
-                continue
+    year = input("Enter year: ")
+    if not year.isdigit() or len(year) != 4:
+        print("Invalid year. Please enter a valid 4-digit year.")
+        return
 
-            movie_storage.update_movie(title, year, rating)
-            print(f"Movie '{title}' updated successfully.")
-            break
-    else:
-        print(f"ERROR: Movie '{title}' not found.")
+    library.update_movie(title, year=int(year), rating=rating)
+    print(f"Movie '{title}' updated successfully.")
 
 
 def show_stats():
     """Displays statistical analysis of movie ratings."""
-    movies = movie_storage.get_movies()
-    # Displays various statistics about the movie ratings.
+    movies = {m["title"]: m for m in library.get_movies_as_dict()}
+    if not movies:
+        print("No movies in the library.")
+        return
+
     ratings = [details["rating"] for details in movies.values()]
-    avg_rating = round(statistics.mean(ratings),1)  # Calculate average rating
-    median_rating = round(statistics.median(ratings),1)  # Calculate median rating
+    avg_rating = round(statistics.mean(ratings), 1)
+    median_rating = round(statistics.median(ratings), 1)
 
-    # Find the highest-rated movies
     highest_rating = max(ratings)
-    best_movies = \
-        [movie for movie, details in movies.items() if details["rating"] == highest_rating]
-    best_movies = ', '.join(best_movies)
+    best_movies = ', '.join([m for m, d in movies.items() if d["rating"] == highest_rating])
 
-    # Find the lowest-rated movies
     lowest_rating = min(ratings)
-    worst_movies = \
-        [movie for movie, details in movies.items() if details["rating"] == lowest_rating]
-    worst_movies = ', '.join(worst_movies)
+    worst_movies = ', '.join([m for m, d in movies.items() if d["rating"] == lowest_rating])
 
-    # Display the statistics
     print(f"""
   The average rating is: {avg_rating}
   The median rating is: {median_rating}
@@ -127,63 +110,57 @@ def show_stats():
 
 def random_movie():
     """Selects and displays a random movie from the database."""
-    movies = movie_storage.get_movies()
-    # Selects and displays a random movie from the dictionary.
-    movie = random.choice(list(movies.keys()))
-    print(f"Random Movie Pick: {movie}, "
-          f"Rating: {movies[movie]['rating']}, Year: {movies[movie]['year']}")
+    movies = list(library.get_movies_as_dict())
+    if not movies:
+        print("No movies available.")
+        return
+
+    movie = random.choice(movies)
+    print(f"Random Movie Pick: {movie['title']} ({movie['year']}) - Rating: {movie['rating']}")
 
 
 def search_movie():
     """Searches for movies by a given substring or suggests similar names."""
-    movies = movie_storage.get_movies()
-    # Searches for movies that contain a user-inputted substring.
+    movies = {m["title"]: m for m in library.get_movies_as_dict()}
     part = input("\nEnter part of the movie name to search: ").lower()
-    results = {}
-    # Direct search
-    for movie, rating in movies.items():
-        if part in movie.lower():
-            results[movie] = rating
 
+    results = {m: d for m, d in movies.items() if part in m.lower()}
     if results:
-        for movie, rating in results.items():
-            print(f"{movie}, {rating}")
+        for movie, details in results.items():
+            print(f"{movie}, Rating: {details['rating']}, Year: {details['year']}")
     else:
-        # Fuzzy Search
-        best_match = process.extract(part, movies.keys(), limit=3)
-        for match in best_match:
-            print(f"{match[0]}, {movies[match[0]]}")
+        matches = process.extract(part, movies.keys(), limit=3)
+        print("Did you mean:")
+        for match in matches:
+            title = match[0]
+            print(f"{title}, Rating: {movies[title]['rating']}, Year: {movies[title]['year']}")
 
 
 def sort_movies_by_rating():
     """Sorts and displays movies by their ratings in descending order."""
-    movies = movie_storage.get_movies()
-    # Sorts and displays movies in descending order of their ratings.
-    for movie in sorted(movies, key = lambda movie: movies[movie]["rating"], reverse = True):
-        print(f"{movie}, {movies[movie]['rating']}")
+    movies = library.get_movies_as_dict()
+    sorted_movies = sorted(movies, key=lambda m: m["rating"], reverse=True)
+    for movie in sorted_movies:
+        print(f"{movie['title']}, {movie['rating']}")
 
 
 def create_rating_histogram():
     """Creates and saves a histogram of movie ratings."""
-    movies = movie_storage.get_movies()
-    # Plots a histogram of movie ratings.
-    filename = input("Enter filename to save histogram: ")
+    movies = library.get_movies_as_dict()
+    filename = input("Enter filename to save histogram: ").strip()
+    ratings = [movie["rating"] for movie in movies]
 
-    # Create histogram plot
-    ratings = [details["rating"] for details in movies.values()]
-    plt.hist(ratings, edgecolor='black', range=(0, 10))
+    plt.hist(ratings, bins=10, edgecolor="black", range=(0, 10))
     plt.xlabel("Ratings")
     plt.ylabel("Number of Movies")
     plt.title("Histogram of Movie Ratings")
-
-    # Save plot as .png
     plt.savefig(filename + ".png")
-    print(f"Histogram saved as {filename}")
+    print(f"Histogram saved as {filename}.png")
 
 
 def filter_movies():
     """Filters movies by minimum rating, start year, and end year."""
-    movies = movie_storage.get_movies()
+    movies = library.get_movies_as_dict()
 
     while True:
         min_rating = input("Enter minimum rating: ")
@@ -223,9 +200,9 @@ def filter_movies():
         break
 
     filtered_movies = []
-    for movie, details in movies.items():
-        rating = details["rating"]
-        year = int(details["year"])
+    for movie in movies:
+        rating = movie["rating"]
+        year = int(movie["year"])
 
         if min_rating is not None and rating < min_rating:
             continue
@@ -234,16 +211,16 @@ def filter_movies():
         if end_year is not None and year > end_year:
             continue
 
-        filtered_movies.append((movie, year, rating))
+        filtered_movies.append((movie["title"], year, rating))
 
     print("\nFiltered Movies:")
-    for movie, year, rating in filtered_movies:
-        print(f"{movie} ({year}): {rating}")
+    for title, year, rating in filtered_movies:
+        print(f"{title} ({year}): {rating}")
 
 
 def get_menu():
     """Displays the main menu options."""
-    start_message = """
+    return """
       ********** My Movies Database **********
 
       Menu:
@@ -259,9 +236,8 @@ def get_menu():
       9. Create Rating Histogram
       10. Filter movies
 
-      Enter choice (0-9): 
+      Enter choice (0-10): 
     """
-    return start_message
 
 
 menu_actions = {
@@ -282,12 +258,13 @@ menu_actions = {
 def main():
     """Runs the main program loop, handling user input."""
     while True:
-        choice = input(get_menu())
+        choice = input(get_menu()).strip()
         action = menu_actions.get(choice)
         if action:
             action()
         else:
-            print("Invalid choice! Please enter a number from 0-9.")
+            print("Invalid choice! Please enter a number from 0-10.")
+
 
 if __name__ == "__main__":
     main()
