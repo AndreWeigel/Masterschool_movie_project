@@ -2,6 +2,9 @@
 import sys
 import statistics
 import random
+import os
+import requests
+from dotenv import load_dotenv
 
 # Third-party imports
 import matplotlib.pyplot as plt
@@ -12,6 +15,60 @@ from library import MovieLibrary
 
 # Initialize the MovieLibrary
 library = MovieLibrary("sqlite:///movies.db")
+
+import os
+import requests
+from dotenv import load_dotenv
+
+
+def search_movies():
+    load_dotenv()  # Load API key from .env file
+    api_key = os.getenv("OMDB_API_KEY")
+
+    if not api_key:
+        raise ValueError("OMDB_API_KEY not found in .env file")
+
+    search_query = input("What movie do you want to add: ").strip()
+    if not search_query:
+        print("Insert a valid query.")
+        return None
+
+    url = f"https://www.omdbapi.com/?s={search_query}&apikey={api_key}"
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        print("Error fetching data from OMDb API")
+        return None
+
+    data = response.json()
+
+    if data.get("Response") != "True":
+        print("No movies found.")
+        return None
+
+    movies = data.get("Search", [])
+    if not movies:
+        print("No movies found.")
+        input("Press Enter to continue.")
+        return None
+
+    print("\nSearch results:")
+    for index, movie in enumerate(movies, start=1):
+        print(f"{index}. {movie['Title']} ({movie['Year']})")
+
+    print("0. None of these")
+
+    while True:
+        try:
+            choice = int(input("\nChoose a movie by number: "))
+            if choice == 0:
+                return None
+            elif 1 <= choice <= len(movies):
+                return movies[choice - 1]
+            else:
+                print("Invalid selection. Try again.")
+        except ValueError:
+            print("Please enter a valid number.")
 
 
 def exit_menu():
@@ -31,26 +88,22 @@ def list_movies():
 def add_movie():
     """Adds a new movie to the dictionary with its rating."""
     while True:
-        title = input("\nEnter movie title: ").strip()
-        if not title:
-            print("Movie title cannot be empty. Please enter a valid title.")
-            continue
-
-        try:
-            rating = float(input("Enter rating (0-10): "))
-            if rating < 0 or rating > 10:
-                print("Rating must be between 0 and 10.")
+        movie_data = search_movies()
+        title = movie_data["Title"]
+        year = movie_data["Year"]
+        #director = movie_data["Director"]
+        poster = movie_data["Poster"]
+        while True:
+            try:
+                rating = float(input("Enter rating (0-10): "))
+                if rating < 0 or rating > 10:
+                    print("Rating must be between 0 and 10.")
+                break
+            except ValueError:
+                print("Invalid input. Please enter a numeric rating between 0 and 10.")
                 continue
-        except ValueError:
-            print("Invalid input. Please enter a numeric rating between 0 and 10.")
-            continue
 
-        year = input("Enter year: ")
-        if not year.isdigit() or len(year) != 4:
-            print("Invalid year. Please enter a valid 4-digit year.")
-            continue
-
-        library.add_movie(title, int(year), rating)
+        library.add_movie(title, int(year), rating, cover_art = poster)
         print(f"Movie '{title}' added successfully.")
         break
 
