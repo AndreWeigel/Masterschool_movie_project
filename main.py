@@ -4,6 +4,7 @@ import statistics
 import random
 import os
 import requests
+from requests.exceptions import RequestException
 from dotenv import load_dotenv
 
 # Third-party imports
@@ -16,12 +17,7 @@ from library import MovieLibrary
 # Initialize the MovieLibrary
 library = MovieLibrary("sqlite:///movies.db")
 
-import os
-import requests
-from dotenv import load_dotenv
-
-
-def search_movies():
+def search_movies_api():
     load_dotenv()  # Load API key from .env file
     api_key = os.getenv("OMDB_API_KEY")
 
@@ -64,14 +60,14 @@ def search_movies():
             if choice == 0:
                 return None
             elif 1 <= choice <= len(movies):
-                movie_details = get_movie_details(movies[choice - 1]["Title"])
+                movie_details = get_movie_details_api(movies[choice - 1]["Title"])
                 return movie_details
             else:
                 print("Invalid selection. Try again.")
         except ValueError:
             print("Please enter a valid number.")
 
-def get_movie_details(movie_title):
+def get_movie_details_api(movie_title):
     load_dotenv()  # Load API key from .env file
     api_key = os.getenv("OMDB_API_KEY")
 
@@ -79,7 +75,12 @@ def get_movie_details(movie_title):
         raise ValueError("OMDB_API_KEY not found in .env file")
 
     url = f"https://www.omdbapi.com/?t={movie_title}&apikey={api_key}"
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except RequestException as e:
+        print(f"Error connecting to OMDb API: {e}")
+        return None
 
     if response.status_code != 200:
         print("Error fetching data from OMDb API")
@@ -107,15 +108,18 @@ def list_movies():
 def add_movie():
     """Adds a new movie to the dictionary with its rating."""
     while True:
-        movie_data = search_movies()
+        movie_data = search_movies_api()
         if not movie_data:
             break
         title = movie_data["Title"]
         year = movie_data["Year"]
         director = movie_data["Director"]
         poster = movie_data["Poster"]
-        rating = movie_data["Ratings"][0]["Value"].split('/')[0]
-
+        try:
+            rating = movie_data.get("Ratings", [])[0]["Value"].split('/')[0]
+        except Exception:
+            rating = "0"
+            print(f"Rating not found for '{title}', defaulting to 0.")
 
         library.add_movie(title, int(year), rating, director = director, cover_art = poster)
         print(f"Movie '{title}' added successfully.")
