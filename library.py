@@ -52,6 +52,9 @@ class MovieLibrary:
             if movie:
                 session.delete(movie)
                 session.commit()
+                print(f"Movie '{title}' removed from the library.")
+            else:
+                print(f"No movie found with title '{title}'")
 
     def get_movies_as_movie_obj(self):
         """Returns a list of all movies in the library."""

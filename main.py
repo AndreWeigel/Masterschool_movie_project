@@ -140,28 +140,41 @@ def delete_movie():
     """Deletes a movie from the dictionary if it exists."""
     title = input("\nEnter movie name to delete: ")
     library.remove_movie(title)
-    print(f"Movie '{title}' deleted successfully.")
+
 
 
 def update_movie():
     """Updates the rating of an existing movie."""
     title = input("\nEnter movie to update: ")
-    try:
-        rating = float(input("Enter rating (0-10): "))
-        if rating < 0 or rating > 10:
-            print("Rating must be between 0 and 10.")
+
+    kwargs = {}
+
+    rating_input = input("Enter rating (0-10) or press Enter to skip this field: ")
+    if rating_input:
+        try:
+            rating = float(rating_input)
+            if 0 <= rating <= 10:
+                kwargs['rating'] = rating
+            else:
+                print("Rating must be between 0 and 10.")
+                return
+        except ValueError:
+            print("Invalid input. Please enter a numeric rating between 0 and 10.")
             return
-    except ValueError:
-        print("Invalid input. Please enter a numeric rating between 0 and 10.")
-        return
 
-    year = input("Enter year: ")
-    if not year.isdigit() or len(year) != 4:
-        print("Invalid year. Please enter a valid 4-digit year.")
-        return
+    year_input = input("Enter year or press Enter to skip this field: ")
+    if year_input:
+        if year_input.isdigit() and len(year_input) == 4:
+            kwargs['year'] = int(year_input)
+        else:
+            print("Invalid year. Please enter a valid 4-digit year.")
+            return
 
-    library.update_movie(title, year=int(year), rating=rating)
-    print(f"Movie '{title}' updated successfully.")
+    if kwargs:
+        library.update_movie(title, **kwargs)
+        print(f"Movie '{title}' updated successfully.")
+    else:
+        print("No updates provided.")
 
 
 def show_stats():
