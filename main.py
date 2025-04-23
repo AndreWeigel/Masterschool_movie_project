@@ -64,11 +64,30 @@ def search_movies():
             if choice == 0:
                 return None
             elif 1 <= choice <= len(movies):
-                return movies[choice - 1]
+                movie_details = get_movie_details(movies[choice - 1]["Title"])
+                return movie_details
             else:
                 print("Invalid selection. Try again.")
         except ValueError:
             print("Please enter a valid number.")
+
+def get_movie_details(movie_title):
+    load_dotenv()  # Load API key from .env file
+    api_key = os.getenv("OMDB_API_KEY")
+
+    if not api_key:
+        raise ValueError("OMDB_API_KEY not found in .env file")
+
+    url = f"https://www.omdbapi.com/?t={movie_title}&apikey={api_key}"
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        print("Error fetching data from OMDb API")
+        return None
+
+    data = response.json()
+
+    return data
 
 
 def exit_menu():
@@ -89,21 +108,16 @@ def add_movie():
     """Adds a new movie to the dictionary with its rating."""
     while True:
         movie_data = search_movies()
+        if not movie_data:
+            break
         title = movie_data["Title"]
         year = movie_data["Year"]
-        #director = movie_data["Director"]
+        director = movie_data["Director"]
         poster = movie_data["Poster"]
-        while True:
-            try:
-                rating = float(input("Enter rating (0-10): "))
-                if rating < 0 or rating > 10:
-                    print("Rating must be between 0 and 10.")
-                break
-            except ValueError:
-                print("Invalid input. Please enter a numeric rating between 0 and 10.")
-                continue
+        rating = movie_data["Ratings"][0]["Value"].split('/')[0]
 
-        library.add_movie(title, int(year), rating, cover_art = poster)
+
+        library.add_movie(title, int(year), rating, director = director, cover_art = poster)
         print(f"Movie '{title}' added successfully.")
         break
 
