@@ -17,7 +17,16 @@ from library import MovieLibrary
 # Initialize the MovieLibrary
 library = MovieLibrary("sqlite:///movies.db")
 
+
+OMDB_BASE_URL = "https://www.omdbapi.com/"
+
+def build_url(api_key, **params):
+    """Builds the URL for the OMDb API."""
+    query_string = "&".join(f"{key}={value}" for key, value in params.items())
+    return f"{OMDB_BASE_URL}?{query_string}&apikey={api_key}"
+
 def search_movies_api():
+    """Searches for movies using the OMDb API."""
     load_dotenv()  # Load API key from .env file
     api_key = os.getenv("OMDB_API_KEY")
 
@@ -29,7 +38,7 @@ def search_movies_api():
         print("Insert a valid query.")
         return None
 
-    url = f"https://www.omdbapi.com/?s={search_query}&apikey={api_key}"
+    url = build_url(api_key, s=search_query)
     response = requests.get(url)
 
     if response.status_code != 200:
@@ -68,13 +77,14 @@ def search_movies_api():
             print("Please enter a valid number.")
 
 def get_movie_details_api(movie_title):
+    """Gets the details of a movie using the OMDb API."""
     load_dotenv()  # Load API key from .env file
     api_key = os.getenv("OMDB_API_KEY")
 
     if not api_key:
         raise ValueError("OMDB_API_KEY not found in .env file")
 
-    url = f"https://www.omdbapi.com/?t={movie_title}&apikey={api_key}"
+    url = build_url(api_key, t=movie_title)
     try:
         response = requests.get(url)
         response.raise_for_status()
