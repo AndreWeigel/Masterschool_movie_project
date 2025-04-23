@@ -13,6 +13,8 @@ from fuzzywuzzy import process
 
 # Local module import
 from library import MovieLibrary
+import generate_website
+
 
 # Initialize the MovieLibrary
 library = MovieLibrary("sqlite:///movies.db")
@@ -329,6 +331,7 @@ def get_menu():
       8. Movies sorted by rating
       9. Create Rating Histogram
       10. Filter movies
+      11. Generate website
 
       Enter choice (0-10): 
     """
@@ -345,7 +348,8 @@ menu_actions = {
     "7": search_movie,
     "8": sort_movies_by_rating,
     "9": create_rating_histogram,
-    "10": filter_movies
+    "10": filter_movies,
+    "11": generate_website.generate_html,
 }
 
 
