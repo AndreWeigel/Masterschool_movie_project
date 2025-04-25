@@ -1,4 +1,3 @@
-import movie
 from library import *
 
 
@@ -9,6 +8,7 @@ MOVIE_PLACEHOLDER = "__TEMPLATE_MOVIE_GRID__"
 
 
 def get_movie_grid(movies):
+    """Generate an HTML grid from a list of movie dictionaries."""
     grid = '<ul class="movie-grid">\n'
 
     for movie in movies:
@@ -19,8 +19,8 @@ def get_movie_grid(movies):
     return grid
 
 
-
 def get_movie_card(movie):
+    """Generate an HTML card for a single movie."""
 
     card = f"""
             <li class="movie-card">
@@ -36,6 +36,7 @@ def get_movie_card(movie):
 
 
 def generate_html():
+    """Generate an HTML file from the template."""
     try:
 
         library = MovieLibrary("sqlite:///movies.db")
