@@ -9,15 +9,13 @@ import matplotlib.pyplot as plt
 from fuzzywuzzy import process
 
 # Local module import
-from library import MovieLibrary
+from models.movie import MovieLibrary
 import generate_website
 from api_connection import search_movies_api
 
 
 # Initialize the MovieLibrary
 library = MovieLibrary("sqlite:///movies.db")
-
-
 
 
 def exit_menu():
@@ -238,7 +236,7 @@ def get_menu(user):
       ********** {user}'s Movie Database **********
 
       Menu:
-      0. Exit
+      0. Log out
       1. List movies
       2. Add movie
       3. Delete movie

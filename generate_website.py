@@ -1,4 +1,4 @@
-from library import *
+from models.movie import *
 
 
 INPUT_HTML_FILE = "index_template.html"
