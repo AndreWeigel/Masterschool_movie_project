@@ -6,9 +6,11 @@ user_handler = UserHandler("sqlite:///movies.db")
 
 
 def print_all_users():
+    """Prints all users in the database."""
     print(user_handler)
 
 def login():
+    """Logs in a user."""
     print("Logging in:")
     username = input("Enter username: ")
     password = input("Enter password: ")
@@ -20,6 +22,7 @@ def login():
 
 
 def register():
+    """Registers a new user."""
     print("Registering new user:")
     username = input("Enter username: ")
     password = input("Enter password: ")
@@ -41,6 +44,7 @@ menu = {
 
 
 def main():
+    """Runs the main program loop, handling user input."""
     while True:
         username = None
         print("\nWelcome to the Movie Library User Menu:")

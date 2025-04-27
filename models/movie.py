@@ -48,17 +48,17 @@ class MovieLibrary:
                 print(f"Movie '{title}' ({year}) already exists in the library for user '{username}'.")
                 return
 
-        movie = Movie(
-                title=title,
-                year=year,
-                rating=rating,
-                director=director or "Unknown",
-                cover_art=cover_art or "Missing",
-                link = link or "Missing",
-                user_id = user.id
-            )
-        session.add(movie)
-        session.commit()
+            movie = Movie(
+                    title=title,
+                    year=year,
+                    rating=rating,
+                    director=director or "Unknown",
+                    cover_art=cover_art or "Missing",
+                    link = link or "Missing",
+                    user_id = user.id
+                )
+            session.add(movie)
+            session.commit()
 
     def update_movie(self, title, username, **kwargs):
         """Updates details of an existing movie by title."""
@@ -115,11 +115,3 @@ class MovieLibrary:
                 "link": movie.link
             })
         return output
-
-
-    def __str__(self):
-        movies = []
-        for movie in self.list_movies():
-            movies.append(str(movie))
-        return "\n".join(movies)
-

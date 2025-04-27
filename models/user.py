@@ -5,6 +5,7 @@ import hashlib
 from models.base import Base
 
 class User(Base):
+    """Represents a user in the database."""
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
@@ -26,6 +27,7 @@ class User(Base):
 
 
 class UserHandler:
+    """Manages a collection of users using a SQLAlchemy ORM with a SQLite database."""
     def __init__(self, db_url):
         """Initializes the MovieLibrary with a database connection."""
         self.engine = create_engine(db_url)  # Creates a connection engine to database.
@@ -33,6 +35,7 @@ class UserHandler:
         self.Session = sessionmaker(bind=self.engine)  # Creates a session factory
 
     def create_user(self, username, password):
+        """Creates a new user if it doesn't already exist."""
         with self.Session() as session:
             if self.get_user_by_username(username):
                 print("Username already exists")
@@ -47,20 +50,24 @@ class UserHandler:
             return new_user
 
     def get_user_by_username(self, username):
+        """Returns a user with the given username, or None if not found."""
         with self.Session() as session:
             return session.query(User).filter_by(username=username).first()
 
     def verify_user(self, username, password):
+        """Verifies that the given username and password are correct."""
         user = self.get_user_by_username(username)
         if user and user.verify_password(password):
             return True
         return False
 
     def list_users(self):
+        """Returns a list of all users in the database."""
         with self.Session() as session:
             return session.query(User).all()
 
     def delete_user(self, username):
+        """Deletes a user from the database."""
         user = self.get_user_by_username(username)
         if not user:
             raise ValueError("User not found")
