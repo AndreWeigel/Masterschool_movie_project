@@ -1,31 +1,43 @@
-from movie import *
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from models.base import Base
+from models.user import User
+from models.movie import Movie
 
 
 class MovieLibrary:
     """Manages a collection of movies using a SQLAlchemy ORM with a SQLite database."""
-    def __init__(self, db_url):
+    def __init__(self, db_url,):
         """Initializes the MovieLibrary with a database connection."""
         self.engine = create_engine(db_url) #Creates a connection engine to database.
         Base.metadata.create_all(self.engine) #Go through all ORM models and create the tables they define
         self.Session = sessionmaker(bind=self.engine) #Creates a session factory
 
-    def add_movie(self, title, year, rating, director=None, cover_art=None):
+    def add_movie(self, title, year, rating, director=None, cover_art=None, username=None):
         """Adds a new movie to the library if it doesn't already exist."""
         with self.Session() as session:
-            exists = session.query(Movie).filter_by(title=title, year=year).first()
+            if username:
+                user = session.query(User).filter_by(username=username).first()
+                if not user:
+                    user = User(username=username)
+                    session.add(user)
+                    session.commit()
+            exists = session.query(Movie).filter_by(title=title, year=year, user_id=user.id).first()
             if exists:
-                print(f"Movie '{title}' ({year}) already exists in the library.")
+                print(f"Movie '{title}' ({year}) already exists in the library for user '{username}'.")
                 return
 
-            movie = Movie(
+        movie = Movie(
                 title=title,
                 year=year,
                 rating=rating,
                 director=director or "Unknown",
-                cover_art=cover_art or "Missing"
+                cover_art=cover_art or "Missing",
+                user_id = user.id
             )
-            session.add(movie)
-            session.commit()
+        session.add(movie)
+        session.commit()
 
     def update_movie(self, title, **kwargs):
         """Updates details of an existing movie by title."""

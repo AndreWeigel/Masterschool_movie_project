@@ -1,8 +1,10 @@
-from sqlalchemy import Column, Integer, String, Float, create_engine
+from sqlalchemy import Column, Integer, String, Float, create_engine, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 
-Base = declarative_base()
+
+from models.base import Base
+from models.user import User
 
 
 class Movie(Base):
@@ -15,7 +17,9 @@ class Movie(Base):
     rating = Column(Float, nullable=False)
     director = Column(String, default="Unknown")
     cover_art = Column(String, default="Missing")
+    user_id = Column(Integer, ForeignKey("users.id"))
 
+    user = relationship("User", back_populates="movies")
 
     def __str__(self):
         return f"{self.title} ({self.year}), directed by {self.director}"

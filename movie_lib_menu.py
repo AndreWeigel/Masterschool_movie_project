@@ -21,12 +21,12 @@ library = MovieLibrary("sqlite:///movies.db")
 
 
 def exit_menu():
-    """Exits the program."""
-    print("Bye!")
-    sys.exit()
+    """Returns 'back' to signal returning to the previous menu."""
+    print("Returning to previous menu...")
+    return "back"
 
 
-def list_movies():
+def list_movies(user):
     """Displays the list of movies along with their ratings and years."""
     movies = library.get_movies_as_dict()
     print(f"{len(movies)} movies in total")
@@ -34,7 +34,7 @@ def list_movies():
         print(f"{movie['title']} - Rating: {movie['rating']} - Year: {movie['year']}")
 
 
-def add_movie():
+def add_movie(user):
     """Adds a new movie to the dictionary with its rating."""
     while True:
         movie_data = search_movies_api()
@@ -50,19 +50,20 @@ def add_movie():
             rating = "0"
             print(f"Rating not found for '{title}', defaulting to 0.")
 
-        library.add_movie(title, int(year), rating, director = director, cover_art = poster)
+        library.add_movie(title, int(year), rating, director = director,
+                          cover_art = poster, username = user)
         print(f"Movie '{title}' added successfully.")
         break
 
 
-def delete_movie():
+def delete_movie(user):
     """Deletes a movie from the dictionary if it exists."""
     title = input("\nEnter movie name to delete: ")
     library.remove_movie(title)
 
 
 
-def update_movie():
+def update_movie(user):
     """Updates the rating of an existing movie."""
     title = input("\nEnter movie to update: ")
 
@@ -96,7 +97,7 @@ def update_movie():
         print("No updates provided.")
 
 
-def show_stats():
+def show_stats(user):
     """Displays statistical analysis of movie ratings."""
     movies = {m["title"]: m for m in library.get_movies_as_dict()}
     if not movies:
@@ -121,7 +122,7 @@ def show_stats():
   """)
 
 
-def random_movie():
+def random_movie(user):
     """Selects and displays a random movie from the database."""
     movies = list(library.get_movies_as_dict())
     if not movies:
@@ -132,7 +133,7 @@ def random_movie():
     print(f"Random Movie Pick: {movie['title']} ({movie['year']}) - Rating: {movie['rating']}")
 
 
-def search_movie():
+def search_movie(user):
     """Searches for movies by a given substring or suggests similar names."""
     movies = {m["title"]: m for m in library.get_movies_as_dict()}
     part = input("\nEnter part of the movie name to search: ").lower()
@@ -149,7 +150,7 @@ def search_movie():
             print(f"{title}, Rating: {movies[title]['rating']}, Year: {movies[title]['year']}")
 
 
-def sort_movies_by_rating():
+def sort_movies_by_rating(user):
     """Sorts and displays movies by their ratings in descending order."""
     movies = library.get_movies_as_dict()
     sorted_movies = sorted(movies, key=lambda m: m["rating"], reverse=True)
@@ -157,7 +158,7 @@ def sort_movies_by_rating():
         print(f"{movie['title']}, {movie['rating']}")
 
 
-def create_rating_histogram():
+def create_rating_histogram(user, filename = "rating_histogram.png"):
     """Creates and saves a histogram of movie ratings."""
     movies = library.get_movies_as_dict()
     filename = input("Enter filename to save histogram: ").strip()
@@ -171,7 +172,7 @@ def create_rating_histogram():
     print(f"Histogram saved as {filename}.png")
 
 
-def filter_movies():
+def filter_movies(user):
     """Filters movies by minimum rating, start year, and end year."""
     movies = library.get_movies_as_dict()
 
@@ -231,10 +232,10 @@ def filter_movies():
         print(f"{title} ({year}): {rating}")
 
 
-def get_menu():
+def get_menu(user):
     """Displays the main menu options."""
-    return """
-      ********** My Movies Database **********
+    return f"""
+      ********** {user}'s Movie Database **********
 
       Menu:
       0. Exit
@@ -255,31 +256,34 @@ def get_menu():
 
 
 menu_actions = {
-    "0": exit_menu,
-    "1": list_movies,
-    "2": add_movie,
-    "3": delete_movie,
-    "4": update_movie,
-    "5": show_stats,
-    "6": random_movie,
-    "7": search_movie,
-    "8": sort_movies_by_rating,
-    "9": create_rating_histogram,
-    "10": filter_movies,
-    "11": generate_website.generate_html,
+    "0": lambda user: exit_menu(),
+    "1": lambda user: list_movies(user),
+    "2": lambda user: add_movie(user),
+    "3": lambda user: delete_movie(user),
+    "4": lambda user: update_movie(user),
+    "5": lambda user: show_stats(user),
+    "6": lambda user: random_movie(user),
+    "7": lambda user: search_movie(user),
+    "8": lambda user: sort_movies_by_rating(user),
+    "9": lambda user: create_rating_histogram(user),
+    "10": lambda user: filter_movies(user),
+    "11": lambda user: generate_website.generate_html(user),
 }
 
 
-def run_menu():
+def main(user):
     """Runs the main program loop, handling user input."""
+    print(f"Welcome {user}!")
     while True:
-        choice = input(get_menu()).strip()
+        choice = input(get_menu(user)).strip()
         action = menu_actions.get(choice)
         if action:
-            action()
+            result = action(user)
+            if result == "back":
+                break
         else:
             print("Invalid choice! Please enter a number from 0-10.")
 
 
 if __name__ == "__main__":
-    run_menu()
+    main('Andre')
