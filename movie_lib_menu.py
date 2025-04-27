@@ -42,6 +42,8 @@ def add_movie(user):
         year = movie_data["Year"]
         director = movie_data["Director"]
         poster = movie_data["Poster"]
+        link = f"https://www.imdb.com/title/{movie_data["imdbID"]}/"
+
         try:
             rating = movie_data.get("Ratings", [])[0]["Value"].split('/')[0]
         except Exception:
@@ -49,7 +51,7 @@ def add_movie(user):
             print(f"Rating not found for '{title}', defaulting to 0.")
 
         library.add_movie(title, int(year), rating, director = director,
-                          cover_art = poster, username = user)
+                          cover_art = poster,link = link, username = user)
         print(f"Movie '{title}' added successfully.")
         break
 

@@ -17,6 +17,7 @@ class Movie(Base):
     rating = Column(Float, nullable=False)
     director = Column(String, default="Unknown")
     cover_art = Column(String, default="Missing")
+    link = Column(String, default="Missing")
     user_id = Column(Integer, ForeignKey("users.id"))
 
     user = relationship("User", back_populates="movies")
@@ -27,13 +28,13 @@ class Movie(Base):
 
 class MovieLibrary:
     """Manages a collection of movies using a SQLAlchemy ORM with a SQLite database."""
-    def __init__(self, db_url,):
+    def __init__(self, db_url):
         """Initializes the MovieLibrary with a database connection."""
         self.engine = create_engine(db_url) #Creates a connection engine to database.
         Base.metadata.create_all(self.engine) #Go through all ORM models and create the tables they define
         self.Session = sessionmaker(bind=self.engine) #Creates a session factory
 
-    def add_movie(self, title, year, rating, director=None, cover_art=None, username=None):
+    def add_movie(self, title, year, rating, director=None, cover_art=None, link = None, username=None):
         """Adds a new movie to the library if it doesn't already exist."""
         with self.Session() as session:
             if username:
@@ -53,6 +54,7 @@ class MovieLibrary:
                 rating=rating,
                 director=director or "Unknown",
                 cover_art=cover_art or "Missing",
+                link = link or "Missing",
                 user_id = user.id
             )
         session.add(movie)
@@ -109,7 +111,8 @@ class MovieLibrary:
                 "year": movie.year,
                 "rating": movie.rating,
                 "director": movie.director,
-                "cover_art": movie.cover_art
+                "cover_art": movie.cover_art,
+                "link": movie.link
             })
         return output
 
