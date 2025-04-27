@@ -1,5 +1,4 @@
 # Standard library import
-import sys
 import statistics
 import random
 
@@ -7,6 +6,7 @@ import random
 # Third-party imports
 import matplotlib.pyplot as plt
 from fuzzywuzzy import process
+
 
 # Local module import
 from models.movie import MovieLibrary
@@ -20,13 +20,13 @@ library = MovieLibrary("sqlite:///movies.db")
 
 def exit_menu():
     """Returns 'back' to signal returning to the previous menu."""
-    print("Returning to previous menu...")
+    print("Logging Out...")
     return "back"
 
 
 def list_movies(user):
     """Displays the list of movies along with their ratings and years."""
-    movies = library.get_movies_as_dict()
+    movies = library.get_movies_as_dict(username = user)
     print(f"{len(movies)} movies in total")
     for movie in movies:
         print(f"{movie['title']} - Rating: {movie['rating']} - Year: {movie['year']}")
@@ -57,7 +57,7 @@ def add_movie(user):
 def delete_movie(user):
     """Deletes a movie from the dictionary if it exists."""
     title = input("\nEnter movie name to delete: ")
-    library.remove_movie(title)
+    library.remove_movie(title, username = user)
 
 
 
@@ -89,7 +89,7 @@ def update_movie(user):
             return
 
     if kwargs:
-        library.update_movie(title, **kwargs)
+        library.update_movie(title, username = user, **kwargs)
         print(f"Movie '{title}' updated successfully.")
     else:
         print("No updates provided.")
@@ -97,7 +97,7 @@ def update_movie(user):
 
 def show_stats(user):
     """Displays statistical analysis of movie ratings."""
-    movies = {m["title"]: m for m in library.get_movies_as_dict()}
+    movies = {m["title"]: m for m in library.get_movies_as_dict(username = user)}
     if not movies:
         print("No movies in the library.")
         return
@@ -122,7 +122,7 @@ def show_stats(user):
 
 def random_movie(user):
     """Selects and displays a random movie from the database."""
-    movies = list(library.get_movies_as_dict())
+    movies = list(library.get_movies_as_dict(username = user))
     if not movies:
         print("No movies available.")
         return
@@ -133,7 +133,7 @@ def random_movie(user):
 
 def search_movie(user):
     """Searches for movies by a given substring or suggests similar names."""
-    movies = {m["title"]: m for m in library.get_movies_as_dict()}
+    movies = {m["title"]: m for m in library.get_movies_as_dict(username = user)}
     part = input("\nEnter part of the movie name to search: ").lower()
 
     results = {m: d for m, d in movies.items() if part in m.lower()}
@@ -150,7 +150,7 @@ def search_movie(user):
 
 def sort_movies_by_rating(user):
     """Sorts and displays movies by their ratings in descending order."""
-    movies = library.get_movies_as_dict()
+    movies = library.get_movies_as_dict(username = user)
     sorted_movies = sorted(movies, key=lambda m: m["rating"], reverse=True)
     for movie in sorted_movies:
         print(f"{movie['title']}, {movie['rating']}")
@@ -158,7 +158,7 @@ def sort_movies_by_rating(user):
 
 def create_rating_histogram(user, filename = "rating_histogram.png"):
     """Creates and saves a histogram of movie ratings."""
-    movies = library.get_movies_as_dict()
+    movies = library.get_movies_as_dict(username = user)
     filename = input("Enter filename to save histogram: ").strip()
     ratings = [movie["rating"] for movie in movies]
 
@@ -172,7 +172,7 @@ def create_rating_histogram(user, filename = "rating_histogram.png"):
 
 def filter_movies(user):
     """Filters movies by minimum rating, start year, and end year."""
-    movies = library.get_movies_as_dict()
+    movies = library.get_movies_as_dict(username = user)
 
     while True:
         min_rating = input("Enter minimum rating: ")

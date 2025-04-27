@@ -35,12 +35,12 @@ def get_movie_card(movie):
     return card
 
 
-def generate_html():
+def generate_html(user):
     """Generate an HTML file from the template."""
     try:
 
         library = MovieLibrary("sqlite:///movies.db")
-        movies = library.get_movies_as_dict()
+        movies = library.get_movies_as_dict(username = user)
 
         with open(INPUT_HTML_FILE, "r") as f:
             html_template = f.read()
@@ -59,5 +59,5 @@ def generate_html():
 
 if __name__ == "__main__":
     # Initialize the MovieLibrary
-    generate_html()
+    generate_html(user=Andre)
 

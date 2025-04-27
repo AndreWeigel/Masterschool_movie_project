@@ -58,10 +58,11 @@ class MovieLibrary:
         session.add(movie)
         session.commit()
 
-    def update_movie(self, title, **kwargs):
+    def update_movie(self, title, username, **kwargs):
         """Updates details of an existing movie by title."""
         with self.Session() as session:
-            movie = session.query(Movie).filter_by(title=title).first()
+            user = session.query(User).filter_by(username=username).first()
+            movie = session.query(Movie).filter_by(title=title, user_id=user.id).first()
             if movie:
                 if 'year' in kwargs:
                     movie.year = kwargs['year']
@@ -76,10 +77,11 @@ class MovieLibrary:
                 print(f"No movie found with title '{title}'")
 
 
-    def remove_movie(self, title):
+    def remove_movie(self, title, username):
         """Removes a movie from the library by title."""
         with self.Session() as session:
-            movie = session.query(Movie).filter_by(title=title).first()
+            user = session.query(User).filter_by(username=username).first()
+            movie = session.query(Movie).filter_by(title=title, user_id=user.id).first()
             if movie:
                 session.delete(movie)
                 session.commit()
@@ -87,17 +89,19 @@ class MovieLibrary:
             else:
                 print(f"No movie found with title '{title}'")
 
-    def get_movies_as_movie_obj(self):
+    def get_movies_as_movie_obj(self, username):
         """Returns a list of all movies in the library."""
         with self.Session() as session:
-            movies = session.query(Movie).all()
+            user = session.query(User).filter_by(username=username).first()
+            movies = session.query(Movie).filter_by(user_id=user.id).all()
 
         return movies
 
-    def get_movies_as_dict(self):
+    def get_movies_as_dict(self, username):
         """Returns all movies in the library as a list of dictionaries."""
         with self.Session() as session:
-            movies = session.query(Movie).all()
+            user = session.query(User).filter_by(username=username).first()
+            movies = session.query(Movie).filter_by(user_id=user.id).all()
         output = []
         for movie in movies:
             output.append({
